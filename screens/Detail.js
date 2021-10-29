@@ -1,56 +1,115 @@
-import React, { useState } from 'react'
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View, KeyboardAvoidingView, TextInput, Keyboard } from 'react-native'
-import { useDispatch, useSelector } from 'react-redux'
-import { actionType, UPDATE_LIST, ADD_TODO_LIST } from '../redux/reducers'
+import React, { useState, useEffect } from 'react'
+import {
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    KeyboardAvoidingView,
+    TextInput,
+    Keyboard,
+    ActivityIndicator,
+    Animated
+} from 'react-native'
+// import { useDispatch, useSelector } from 'react-redux'
+// import { actionType, UPDATE_LIST, ADD_TODO_LIST } from '../redux/reducers'
 import colors from '../constants/colors'
 import images from '../constants/images'
+import { getTodos, updateTodos } from '../firebase'
+import Swipeable from 'react-native-gesture-handler/Swipeable'
 
-const Detail = ({ route: { params: { id } }, navigation }) => {
+const Detail = ({ route: { params: { id, color, name } }, navigation }) => {
+    const [todos, setTodos] = useState([])
+    const [nameTodo, setNameTodo] = useState('')
+    const [loading, setLoading] = useState(false)
+    useEffect(() => {
+        getTodos(id, setTodos, setLoading)
+    }, [])
 
-    const [todo, setTodo] = useState('')
+    const length = todos.length
 
-    const lists = useSelector(state => state.lists)
+    const completed = todos.filter(e => e.completed === true).length
 
-    const listDetail = lists.filter(e => e.id === id)[0]
+    //Redux
 
-    const dispatch = useDispatch()
+    // const lists = useSelector(state => state.lists)
 
-    const updateTodoList = (type, payload) => {
-        dispatch(actionType(type, payload))
+    // const listDetail = lists.filter(e => e.id === id)[0]
+
+    // const dispatch = useDispatch()
+
+    // const updateTodoList = (type, payload) => {
+    //     dispatch(actionType(type, payload))
+    // }
+
+    // const addTodoList = (type, payload) => {
+    //     dispatch(actionType(type, payload))
+    //     setTodo('')
+    //     Keyboard.dismiss()
+    // }
+
+    const rightAction = () => {
+        return (
+            <TouchableOpacity>
+
+                <Text>Delete</Text>
+
+            </TouchableOpacity>
+        )
     }
-
-    const addTodoList = (type, payload) => {
-        dispatch(actionType(type, payload))
-        setTodo('')
-        Keyboard.dismiss()
-    }
-
-    const length = listDetail.todos.length
-
-    const completed = listDetail.todos.filter(e => e.completed === true).length
 
     const renderTodo = (item, index) => (
-        <TouchableOpacity
-            style={styles.item}
-            onPress={() => updateTodoList(UPDATE_LIST, { id, index })}
-        >
-            <Image
-                style={[styles.image, { tintColor: colors.gray }]}
-                source={item.completed ? images.check_box : images.square}
-            />
-            <Text style={
-                [styles.txtItem,
-                {
-                    textDecorationLine: item.completed ? 'line-through' : 'none',
-                    color: item.completed ? colors.gray : colors.black,
-                }]
-            }
-            >
-                {item.title}
-            </Text>
-        </TouchableOpacity>
-    )
 
+        <Swipeable >
+            <View style={styles.item}>
+
+                <TouchableOpacity
+
+                    onPress={() => {
+                        // updateTodoList(UPDATE_LIST, { id, index })
+                        let newTodos = todos.map((e, i) => {
+                            if (i === index) {
+                                e.completed = !e.completed
+                            }
+                            return e
+                        })
+                        updateTodos(
+                            id,
+                            {
+                                name,
+                                color,
+                                todos: newTodos
+                            },
+                            setLoading
+                        )
+                    }}
+                >
+                    <Image
+                        style={[styles.image, { tintColor: colors.gray }]}
+                        source={item.completed ? images.check_box : images.square}
+                    />
+                </TouchableOpacity>
+                <Text style={
+                    [styles.txtItem,
+                    {
+                        textDecorationLine: item.completed ? 'line-through' : 'none',
+                        color: item.completed ? colors.gray : colors.black,
+                    }]
+                }
+                >
+                    {item.title}
+                </Text>
+            </View>
+        </Swipeable>
+    )
+    if (loading) {
+        return (
+            <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+                <ActivityIndicator size='large' color={colors.blue} />
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
             <TouchableOpacity
@@ -63,27 +122,44 @@ const Detail = ({ route: { params: { id } }, navigation }) => {
                 />
             </TouchableOpacity>
             <View style={styles.header}>
-                <Text style={styles.name}>{listDetail.name}</Text>
+                <Text style={styles.name}>{name}</Text>
                 <Text style={styles.task}>{completed} of {length} tasks</Text>
-                <View style={[styles.divider, { backgroundColor: listDetail.color, }]} />
+                <View style={[styles.divider, { backgroundColor: color, }]} />
             </View>
             <View style={{ justifyContent: 'space-between', flex: 1 }}>
                 <View style={{ flex: 4 }}>
                     <FlatList
-                        data={listDetail.todos}
+                        data={todos}
                         keyExtractor={(item, index) => index.toString()}
                         renderItem={({ item, index }) => renderTodo(item, index)}
                     />
                 </View>
                 <KeyboardAvoidingView style={styles.footer} behavior='padding'>
                     <TextInput
-                        style={[styles.input, { borderColor: listDetail.color, }]}
-                        onChangeText={setTodo}
-                        value={todo}
+                        style={[styles.input, { borderColor: color, }]}
+                        onChangeText={setNameTodo}
+                        value={nameTodo}
                     />
                     <TouchableOpacity
-                        style={[styles.buttonAdd, { backgroundColor: listDetail.color }]}
-                        onPress={() => addTodoList(ADD_TODO_LIST, { idAdd: id, todo })}
+                        style={[styles.buttonAdd, { backgroundColor: color }]}
+                        onPress={() => {
+                            // addTodoList(ADD_TODO_LIST, { idAdd: id, todo })
+                            let newTodos = [...todos, {
+                                title: nameTodo,
+                                completed: false
+                            }]
+                            updateTodos(
+                                id,
+                                {
+                                    name,
+                                    color,
+                                    todos: newTodos
+                                },
+                                setLoading
+                            )
+                            setNameTodo('')
+                            Keyboard.dismiss()
+                        }}
                     >
                         <Image
                             source={images.plus}
@@ -93,7 +169,6 @@ const Detail = ({ route: { params: { id } }, navigation }) => {
                 </KeyboardAvoidingView>
             </View>
         </View>
-
     )
 }
 
@@ -161,6 +236,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         height: 50,
+        paddingHorizontal: 20
     },
     txtItem: {
         fontWeight: '700',

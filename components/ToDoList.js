@@ -14,6 +14,8 @@ const ToDoList = ({ item, navigation }) => {
                 }]}
             onPress={() => navigation.navigate('Detail', {
                 id: item.id,
+                color: item.color,
+                name: item.name
             })}
         >
             <Text numberOfLines={1} style={styles.name}>{item.name}</Text>

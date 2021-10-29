@@ -1,13 +1,14 @@
 import React, { useState } from 'react'
 import { Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import { useDispatch } from 'react-redux'
-import { actionType, ADD_LIST } from '../redux/reducers'
+// import { useDispatch } from 'react-redux'
+// import { actionType, ADD_LIST } from '../redux/reducers'
 import colors from '../constants/colors'
 import images from '../constants/images'
+import { addList } from '../firebase'
 
-const AddListModal = ({ clickModal }) => {
+const AddListModal = ({ clickModal, setLoading }) => {
 
-    const dispatch = useDispatch()
+    // const dispatch = useDispatch()
 
     const backgroundColors = ['#5CD859', '#24A6D9', '#595BD9', '#8022D9', '#D159D8', '#D85963', '#D88559',]
 
@@ -31,8 +32,19 @@ const AddListModal = ({ clickModal }) => {
         )
     }
 
-    const addTodoList = (type, payload) => {
-        dispatch(actionType(type, payload))
+    //Redux
+    // const addTodoList = (type, payload) => {
+    //     dispatch(actionType(type, payload))
+    //     setName('')
+    //     clickModal()
+    // }
+
+    const addTodoList = () => {
+        addList({
+            name,
+            color,
+            todos: []
+        }, setLoading)
         setName('')
         clickModal()
     }
@@ -62,7 +74,10 @@ const AddListModal = ({ clickModal }) => {
             </View>
             <TouchableOpacity
                 style={[styles.btnCreate, { backgroundColor: color }]}
-                onPress={() => addTodoList(ADD_LIST, { name, color, todos: [] })}
+                onPress={() => {
+                    // addTodoList(ADD_LIST, { name, color, todos: [] })
+                    addTodoList()
+                }}
             >
                 <Text style={styles.txtCreate}>Create!</Text>
             </TouchableOpacity>

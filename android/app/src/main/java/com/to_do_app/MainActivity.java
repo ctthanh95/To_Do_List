@@ -1,6 +1,8 @@
 package com.to_do_app;
 
 import com.facebook.react.ReactActivity;
+import com.facebook.react.ReactActivityDelegate;
+import com.facebook.react.ReactRootView;
 
 public class MainActivity extends ReactActivity {
 
@@ -12,4 +14,5 @@ public class MainActivity extends ReactActivity {
   protected String getMainComponentName() {
     return "To_Do_App";
   }
+  
 }

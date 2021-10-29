@@ -1,20 +1,38 @@
-import React, { useState } from 'react'
-import { FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useState } from 'react'
+import { FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native'
+// import { useSelector } from 'react-redux'
 import ToDoList from '../components/ToDoList'
 import colors from '../constants/colors'
 import images from '../constants/images'
 import AddListModal from '../components/AddListModal'
+import { signIn, getLists } from '../firebase'
 
 const Lists = ({ navigation }) => {
     const [visible, setVisible] = useState(false)
+    const [lists, setLists] = useState([])
+    const [loading, setLoading] = useState(false)
 
     const clickModal = () => {
         setVisible(!visible)
     }
 
-    const lists = useSelector(state => state.lists)
+    //Redux
+    // const lists = useSelector(state => state.lists)
 
+    useEffect(() => {
+        signIn()
+    }, [])
+    useEffect(() => {
+        getLists(setLists, setLoading)
+    }, [])
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size='large' color={colors.blue} />
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
             <Modal
@@ -24,6 +42,7 @@ const Lists = ({ navigation }) => {
             >
                 <AddListModal
                     clickModal={clickModal}
+                    setLoading={setLoading}
                 />
             </Modal>
             <View style={styles.title}>
