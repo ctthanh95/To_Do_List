@@ -1,11 +1,13 @@
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 
+let userUid
+
 export const signIn = () => {
     auth()
         .signInAnonymously()
         .then(() => {
-            // console.log('User signed in anonymously')
+            userUid = auth().currentUser.uid
         })
         .catch(error => {
             if (error.code === 'auth/operation-not-allowed') {
@@ -15,7 +17,6 @@ export const signIn = () => {
         });
 }
 
-export const userUid = auth().currentUser.uid
 
 export const data = firestore().collection('users').doc(userUid).collection('lists')
 
