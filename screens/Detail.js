@@ -10,80 +10,94 @@ import {
     TextInput,
     Keyboard,
     ActivityIndicator,
-    Animated
+    Alert,
 } from 'react-native'
-// import { useDispatch, useSelector } from 'react-redux'
-// import { actionType, UPDATE_LIST, ADD_TODO_LIST } from '../redux/reducers'
+import Swipeable from 'react-native-swipeable'
 import colors from '../constants/colors'
 import images from '../constants/images'
 import { getTodos, updateTodos } from '../firebase'
-import Swipeable from 'react-native-gesture-handler/Swipeable'
 
 const Detail = ({ route: { params: { id, color, name } }, navigation }) => {
+
     const [todos, setTodos] = useState([])
     const [nameTodo, setNameTodo] = useState('')
     const [loading, setLoading] = useState(false)
+
     useEffect(() => {
         getTodos(id, setTodos, setLoading)
     }, [])
 
-    const length = todos.length
+    let length = todos.length
 
-    const completed = todos.filter(e => e.completed === true).length
+    let completed = todos.filter(e => e.completed === true).length
 
-    //Redux
+    const addTodos = () => {
+        if (nameTodo) {
+            let newTodos = [...todos, {
+                title: nameTodo,
+                completed: false
+            }]
+            updateTodos(
+                id,
+                {
+                    name,
+                    color,
+                    todos: newTodos
+                },
+                setLoading
+            )
+            setNameTodo('')
+            Keyboard.dismiss()
+        } else {
+            Alert.alert('Please fill in the required information')
+        }
+    }
 
-    // const lists = useSelector(state => state.lists)
+    const updateToDos = (index) => {
+        let newTodos = todos.filter((e, i) => {
+            if (i === index) {
+                e.completed = !e.completed
+            }
+            return e
+        })
+        updateTodos(
+            id,
+            {
+                name,
+                color,
+                todos: newTodos
+            },
+            setLoading
+        )
+    }
 
-    // const listDetail = lists.filter(e => e.id === id)[0]
-
-    // const dispatch = useDispatch()
-
-    // const updateTodoList = (type, payload) => {
-    //     dispatch(actionType(type, payload))
-    // }
-
-    // const addTodoList = (type, payload) => {
-    //     dispatch(actionType(type, payload))
-    //     setTodo('')
-    //     Keyboard.dismiss()
-    // }
-
-    const rightAction = () => {
-        return (
-            <TouchableOpacity>
-
-                <Text>Delete</Text>
-
-            </TouchableOpacity>
+    const deleteToDos = (index) => {
+        let newTodos = todos.filter((e, i) => i !== index)
+        updateTodos(
+            id,
+            {
+                name,
+                color,
+                todos: newTodos
+            },
+            setLoading
         )
     }
 
     const renderTodo = (item, index) => (
-
-        <Swipeable >
-            <View style={styles.item}>
-
+        <Swipeable
+            rightButtons={[
                 <TouchableOpacity
-
-                    onPress={() => {
-                        // updateTodoList(UPDATE_LIST, { id, index })
-                        let newTodos = todos.map((e, i) => {
-                            if (i === index) {
-                                e.completed = !e.completed
-                            }
-                            return e
-                        })
-                        updateTodos(
-                            id,
-                            {
-                                name,
-                                color,
-                                todos: newTodos
-                            },
-                            setLoading
-                        )
-                    }}
+                    style={styles.btnDel}
+                    onPress={() => deleteToDos(index)}
+                >
+                    <Text style={styles.txtDel}>Delete</Text>
+                </TouchableOpacity>
+            ]}
+        >
+            <View style={styles.item}>
+                <TouchableOpacity
+                    onPress={() => updateToDos(index)}
                 >
                     <Image
                         style={[styles.image, { tintColor: colors.gray }]}
@@ -101,7 +115,7 @@ const Detail = ({ route: { params: { id, color, name } }, navigation }) => {
                     {item.title}
                 </Text>
             </View>
-        </Swipeable>
+        </Swipeable >
     )
     if (loading) {
         return (
@@ -111,7 +125,7 @@ const Detail = ({ route: { params: { id, color, name } }, navigation }) => {
         )
     }
     return (
-        <View style={styles.container}>
+        <View style={styles.container} >
             <TouchableOpacity
                 style={styles.button}
                 onPress={() => navigation.goBack()}
@@ -123,12 +137,13 @@ const Detail = ({ route: { params: { id, color, name } }, navigation }) => {
             </TouchableOpacity>
             <View style={styles.header}>
                 <Text style={styles.name}>{name}</Text>
-                <Text style={styles.task}>{completed} of {length} tasks</Text>
+                <Text style={styles.task}>{completed} of {length} tasks (Swipe to delete tasks)</Text>
                 <View style={[styles.divider, { backgroundColor: color, }]} />
             </View>
             <View style={{ justifyContent: 'space-between', flex: 1 }}>
                 <View style={{ flex: 4 }}>
                     <FlatList
+                        showsVerticalScrollIndicator={false}
                         data={todos}
                         keyExtractor={(item, index) => index.toString()}
                         renderItem={({ item, index }) => renderTodo(item, index)}
@@ -142,24 +157,7 @@ const Detail = ({ route: { params: { id, color, name } }, navigation }) => {
                     />
                     <TouchableOpacity
                         style={[styles.buttonAdd, { backgroundColor: color }]}
-                        onPress={() => {
-                            // addTodoList(ADD_TODO_LIST, { idAdd: id, todo })
-                            let newTodos = [...todos, {
-                                title: nameTodo,
-                                completed: false
-                            }]
-                            updateTodos(
-                                id,
-                                {
-                                    name,
-                                    color,
-                                    todos: newTodos
-                                },
-                                setLoading
-                            )
-                            setNameTodo('')
-                            Keyboard.dismiss()
-                        }}
+                        onPress={addTodos}
                     >
                         <Image
                             source={images.plus}
@@ -236,11 +234,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         height: 50,
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
+        marginTop: 5,
     },
     txtItem: {
         fontWeight: '700',
         fontSize: 16,
         marginLeft: 15
+    },
+    btnDel: {
+        backgroundColor: colors.red,
+        width: 70,
+        height: 50,
+        marginTop: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 10,
+    },
+    txtDel: {
+        fontWeight: '800',
+        fontSize: 16,
+        color: colors.white
     }
 })

@@ -14,5 +14,5 @@ public class MainActivity extends ReactActivity {
   protected String getMainComponentName() {
     return "To_Do_App";
   }
-  
+
 }

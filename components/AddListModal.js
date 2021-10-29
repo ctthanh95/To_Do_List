@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 // import { useDispatch } from 'react-redux'
 // import { actionType, ADD_LIST } from '../redux/reducers'
 import colors from '../constants/colors'
@@ -40,13 +40,17 @@ const AddListModal = ({ clickModal, setLoading }) => {
     // }
 
     const addTodoList = () => {
-        addList({
-            name,
-            color,
-            todos: []
-        }, setLoading)
-        setName('')
-        clickModal()
+        if (name) {
+            addList({
+                name,
+                color,
+                todos: []
+            }, setLoading)
+            setName('')
+            clickModal()
+        } else {
+            Alert.alert('Please fill in the required information')
+        }
     }
 
     return (
